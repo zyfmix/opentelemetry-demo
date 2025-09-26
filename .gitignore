@@ -16,7 +16,6 @@ docker-compose.override.yml
 .project
 .settings
 
-bin/
 obj/
 .vs/
 .vscode

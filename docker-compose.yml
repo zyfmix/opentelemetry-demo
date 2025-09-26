@@ -334,7 +334,7 @@ services:
     restart: unless-stopped
     ports:
       - "${ENVOY_PORT}:${ENVOY_PORT}"
-      - 10000:10000
+      - 8818:10000
     environment:
       - FRONTEND_PORT
       - FRONTEND_HOST
@@ -458,6 +458,8 @@ services:
       - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
       - OTEL_RESOURCE_ATTRIBUTES
       - OTEL_SERVICE_NAME=payment
+    #volumes:
+    #  - ./src/payment/opentelemetry.js:/usr/src/app/opentelemetry.js
     depends_on:
       otel-collector:
         condition: service_started
@@ -579,7 +581,7 @@ services:
           memory: 20M
     restart: unless-stopped
     ports:
-      - "${SHIPPING_PORT}"
+      - "${SHIPPING_PORT}:${SHIPPING_PORT}"
     environment:
       - SHIPPING_PORT
       - QUOTE_ADDR
@@ -742,7 +744,7 @@ services:
           memory: 1200M
     restart: unless-stopped
     ports:
-      - "${JAEGER_PORT}"         # Jaeger UI
+      - "${JAEGER_PORT}:${JAEGER_PORT}"         # Jaeger UI
       - "${OTEL_COLLECTOR_PORT_GRPC}"
     environment:
       - METRICS_STORAGE_TYPE=prometheus
@@ -763,7 +765,7 @@ services:
       - ./src/grafana/grafana.ini:/etc/grafana/grafana.ini
       - ./src/grafana/provisioning/:/etc/grafana/provisioning/
     ports:
-      - "${GRAFANA_PORT}"
+      - "${GRAFANA_PORT}:${GRAFANA_PORT}"
     logging: *logging
 
   # OpenTelemetry Collector
@@ -783,8 +785,8 @@ services:
       - ${OTEL_COLLECTOR_CONFIG}:/etc/otelcol-config.yml
       - ${OTEL_COLLECTOR_CONFIG_EXTRAS}:/etc/otelcol-config-extras.yml
     ports:
-      - "${OTEL_COLLECTOR_PORT_GRPC}"
-      - "${OTEL_COLLECTOR_PORT_HTTP}"
+      - "${OTEL_COLLECTOR_PORT_GRPC}:${OTEL_COLLECTOR_PORT_GRPC}"
+      - "${OTEL_COLLECTOR_PORT_HTTP}:${OTEL_COLLECTOR_PORT_HTTP}"
     depends_on:
       jaeger:
         condition: service_started
@@ -823,7 +825,7 @@ services:
           memory: 300M
     restart: unless-stopped
     ports:
-      - "${PROMETHEUS_PORT}:${PROMETHEUS_PORT}"
+      - "${PROMETHEUS_PORT}:9090"
     logging: *logging
 
   # OpenSearch
@@ -842,7 +844,9 @@ services:
       - discovery.type=single-node
       - OPENSEARCH_JAVA_OPTS=-Xms300m -Xmx300m
       - DISABLE_INSTALL_DEMO_CONFIG=true
+      # 启用安全插件并设置默认密码
       - DISABLE_SECURITY_PLUGIN=true
+      #- OPENSEARCH_INITIAL_ADMIN_PASSWORD=admin
       # Workaround on OSX for https://bugs.openjdk.org/browse/JDK-8345296
       - _JAVA_OPTIONS
     ulimits:
@@ -853,7 +857,7 @@ services:
         soft: 65536
         hard: 65536
     ports:
-      - "9200"
+      - "9200:9200"
     healthcheck:
       test: curl -s http://localhost:9200/_cluster/health | grep -E '"status":"(green|yellow)"'
       start_period: 10s
@@ -861,3 +865,23 @@ services:
       timeout: 10s
       retries: 10
     logging: *logging
+
+  # https://gist.github.com/dtaivpp/77e310917716e49d6fafa489283847ea
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:${OPENSEARCH_DASHBOARDS_VERSION:-3.2.0}
+    container_name: opensearch-dashboards
+    ports:
+      - 35601:5601
+    expose:
+      - "5601"
+    environment:
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+      # not working, must config opensearch_security.enabled: false via /usr/share/opensearch-dashboards/config/opensearch_dashboards.yml
+      #OPENSEARCH_SECURITY_ENABLED: false
+
+      #OPENSEARCH_USERNAME: admin
+      #OPENSEARCH_PASSWORD: admin
+    volumes:
+      - ./bin/config/opensearch/dashboards/opensearch_dashboards.yml:/usr/share/opensearch-dashboards/config/opensearch_dashboards.yml
+    depends_on:
+      - opensearch
