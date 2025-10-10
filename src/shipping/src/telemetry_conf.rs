@@ -3,7 +3,10 @@
 
 use anyhow::Result;
 use opentelemetry::global;
+use opentelemetry::KeyValue;
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
+use opentelemetry_sdk::trace::SdkTracerProvider;
+use opentelemetry_stdout::SpanExporter;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::EnvFilter;
 
@@ -13,25 +16,35 @@ use opentelemetry_sdk::{
 };
 
 fn get_resource() -> Resource {
-    let detectors: Vec<Box<dyn ResourceDetector>> = vec![
-        Box::new(OsResourceDetector),
-        Box::new(ProcessResourceDetector),
-    ];
+    // let detectors: Vec<Box<dyn ResourceDetector>> = vec![
+    //     Box::new(OsResourceDetector),
+    //     Box::new(ProcessResourceDetector),
+    // ];
+    // Resource::builder().with_detectors(&detectors).build()
 
-    Resource::builder().with_detectors(&detectors).build()
+    let service_name_resource = Resource::builder_empty()
+        .with_attribute(KeyValue::new("service.name", "actix_server"))
+        .build();
+
+    service_name_resource
 }
 
 fn init_tracer_provider() {
     global::set_text_map_propagator(TraceContextPropagator::new());
 
-    let tracer_provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
+    // let tracer_provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
+    //     .with_resource(get_resource())
+    //     .with_batch_exporter(
+    //         opentelemetry_otlp::SpanExporter::builder()
+    //             .with_tonic()
+    //             .build()
+    //             .expect("Failed to initialize tracing provider"),
+    //     )
+    //     .build();
+
+    let tracer_provider = SdkTracerProvider::builder()
+        .with_simple_exporter(SpanExporter::default())
         .with_resource(get_resource())
-        .with_batch_exporter(
-            opentelemetry_otlp::SpanExporter::builder()
-                .with_tonic()
-                .build()
-                .expect("Failed to initialize tracing provider"),
-        )
         .build();
 
     global::set_tracer_provider(tracer_provider);

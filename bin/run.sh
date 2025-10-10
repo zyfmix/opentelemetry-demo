@@ -45,8 +45,8 @@ restart)
   dc logs -f
  ;;
 exec)
-  ebc_debug "dc exec -it zss.openresty /bin/bash"
-  dc exec -it zss.openresty /bin/bash
+  ebc_debug "dc exec -it otel-collector /otelcol-contrib --help"
+  dc exec -it otel-collector /otelcol-contrib --help
  ;;
 ps)
   dc ps -a

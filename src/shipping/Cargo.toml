@@ -8,6 +8,9 @@ path = "src/main.rs"
 
 [dependencies]
 actix-web = "4"
+# actix-web = { version = "4.0", default-features = false, features = [
+#   "compress-zstd",
+# ] }
 anyhow = "1.0.99"
 awc = { version = "3.8.0", default-features = false, features = ["compress-zstd"] }
 serde = { version = "1.0.225", features = ["derive"] }
@@ -15,12 +18,23 @@ tonic = "0.14.2"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 
-opentelemetry = "0.30.0"
-opentelemetry_sdk = "0.30.0"
-opentelemetry-otlp = { version = "0.30.0", features = ["grpc-tonic"] }
-opentelemetry-instrumentation-actix-web = { version = "0.22.0", features = ["sync-middleware", "awc", "metrics"] }
-opentelemetry-appender-tracing = "0.30.1"
+opentelemetry = "0.31.0"
+opentelemetry_sdk = { version = "0.31.0", features = [
+"spec_unstable_metrics_views",
+"metrics",
+] }
+opentelemetry-otlp = { version = "0.31.0", features = ["grpc-tonic"] }
+opentelemetry-instrumentation-actix-web = {  path = "/Users/coam/Test/opentelemetry-rust-contrib/opentelemetry-instrumentation-actix-web/.", features = [
+  "metrics",
+  "sync-middleware",
+  "awc",
+] }
+opentelemetry-appender-tracing = "0.31.0"
 opentelemetry-resource-detectors = "0.9.0"
+# opentelemetry-stdout = "0.31"
+opentelemetry-stdout = { version = "0.31", features = ["trace", "metrics"] }
+
+tracing-opentelemetry = "0.31.0"
 
 [dependencies.uuid]
 version = "1.18.1"

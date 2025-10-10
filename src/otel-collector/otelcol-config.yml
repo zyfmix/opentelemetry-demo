@@ -119,6 +119,8 @@ receivers:
             enabled: true
 exporters:
   debug:
+    # basic, normal, detailed
+    verbosity: detailed
   otlp:
     endpoint: "jaeger:4317"
     tls:
